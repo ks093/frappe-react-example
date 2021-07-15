@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
-import axios from 'axios';
 import './LoginForm.css';
-import {API_BASE_URL, ACCESS_TOKEN_NAME} from '../../constants/apiConstants';
+import {API_BASE_URL, CLIENT_ID} from '../../constants/apiConstants';
 import { withRouter } from "react-router-dom";
 
 function LoginForm(props) {
@@ -20,27 +19,40 @@ function LoginForm(props) {
 
     const handleSubmitClick = (e) => {
         e.preventDefault();
-        const payload={
-            "email":state.email,
-            "password":state.password,
+
+        let urlencoded = new URLSearchParams();
+        urlencoded.append("client_id", CLIENT_ID);
+        urlencoded.append("grant_type", "password");
+        urlencoded.append("username", state.email);
+        urlencoded.append("password", state.password);
+
+        const headers= { 
+            'Content-Type': "application/x-www-form-urlencoded",   
         }
-        axios.post(API_BASE_URL+'/user/login', payload)
+
+        var requestOptions = {
+            method: 'POST',
+            headers,
+            body: urlencoded,
+        };
+
+        fetch(API_BASE_URL+'/api/method/frappe.integrations.oauth2.get_token', requestOptions)
+            .then(res => res.json())
             .then(function (response) {
-                if(response.status === 200){
+                console.log(response);
+                if(response.access_token){
+                    console.log(response);
                     setState(prevState => ({
                         ...prevState,
                         'successMessage' : 'Login successful. Redirecting to home page..'
                     }))
-                    localStorage.setItem(ACCESS_TOKEN_NAME,response.data.token);
+                    localStorage.setItem("accessToken",response.access_token);
+                    localStorage.setItem("tokenType",response.token_type);
+                    localStorage.setItem("email", state.email);
                     redirectToHome();
                     props.showError(null)
                 }
-                else if(response.code === 204){
-                    props.showError("Username and password do not match");
-                }
-                else{
-                    props.showError("Username does not exists");
-                }
+
             })
             .catch(function (error) {
                 console.log(error);

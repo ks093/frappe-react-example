@@ -1,22 +1,28 @@
-import React,{ useEffect } from 'react';
+import React,{ useState } from 'react';
 import { withRouter } from 'react-router-dom';
-import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
-import axios from 'axios'
+import { API_BASE_URL } from '../../constants/apiConstants';
 function Home(props) {
-    useEffect(() => {
-        axios.get(API_BASE_URL+'/user/me', { headers: { 'token': localStorage.getItem(ACCESS_TOKEN_NAME) }})
+    const [state , setState] = useState({
+        response: null
+    })
+    let myHeaders = new Headers();
+    myHeaders.append("Authorization", `Bearer ${localStorage.getItem('accessToken')}`);
+    
+    let requestOptions = {
+        method: 'GET',
+        headers: myHeaders,
+    };
+    if(!state.response){
+        fetch(`${API_BASE_URL}/api/resource/User/${localStorage.getItem('email')}`, requestOptions)
+        .then(res => res.json())
         .then(function (response) {
-            if(response.status !== 200){
-              redirectToLogin()
-            }
+            console.log(response);
         })
         .catch(function (error) {
-          redirectToLogin()
+            console.log(error);
         });
-      })
-    function redirectToLogin() {
-    props.history.push('/login');
     }
+
     return(
         <div className="mt-2">
             Home page content
